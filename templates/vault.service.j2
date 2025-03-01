@@ -1,0 +1,32 @@
+[Unit]
+Description="HashiCorp Vault - A tool for managing secrets"
+Documentation=https://www.vaultproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty={{ vault_dir.conf }}/config.hcl
+
+[Service]
+User={{ vault_user }}
+Group={{ vault_group }}
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+NoNewPrivileges=yes
+ExecStart={{ vault_dir.bin }}/vault server -config={{ vault_dir.conf }}/config.hcl
+ExecReload=/bin/kill --signal HUP 
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StartLimitBurst=3
+LimitNOFILE=65536
+Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:{{ vault_dir.bin }}"
+StandardOutput=file:{{ vault_dir.log }}/vault_std.log
+StandardError=file:{{ vault_dir.log }}/vault_err.log
+
+[Install]
+WantedBy=multi-user.target

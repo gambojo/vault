@@ -1,0 +1,20 @@
+---
+- name: vault | Check
+  ansible.builtin.include_tasks: vault-check.yml
+
+- name: vault | Install vault
+  ansible.builtin.include_tasks: vault-install.yml
+  when: not vault_installed
+
+- name: vault | Generate certificates
+  ansible.builtin.include_tasks: vault-tls.yml
+  when:
+    - vault_tls_enable
+    - not vault_tls_enabled
+
+- name: vault | Configure vault
+  ansible.builtin.include_tasks: vault-configure.yml
+
+- name: vault | Init vault
+  ansible.builtin.include_tasks: vault-init.yml
+  when: not vault_installed

@@ -1,0 +1,9 @@
+---
+driver:
+  name: docker
+platforms:
+  - name: vault-single
+    image: alvistack/debian-testing
+    pre_build_image: true
+verifier:
+  name: testinfra

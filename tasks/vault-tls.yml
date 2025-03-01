@@ -1,0 +1,78 @@
+---
+- name: vault-tls | Create private key of ca for self-signing
+  community.crypto.openssl_privatekey:
+    path: "{{ vault_dir.tls }}/ca.key"
+    cipher: auto
+    size: 2048
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0600'
+
+- name: vault-tls | Create certificate signing request for self-signed certificate
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ vault_dir.tls }}/ca.key"
+    common_name: "{{ vault_conf_cluster_name }} ca"
+    basic_constraints:
+      - 'CA:TRUE'
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+    key_usage_critical: true
+  register: vault_ca_req
+
+- name: vault-tls | Reate self-signed certificate from csr
+  community.crypto.x509_certificate:
+    path: "{{ vault_dir.tls }}/ca.crt"
+    csr_content: "{{ vault_ca_req.csr }}"
+    privatekey_path: "{{ vault_dir.tls }}/ca.key"
+    selfsigned_not_after: "+730d"
+    provider: selfsigned
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0644'
+
+- name: vault-tls | Create private key vault
+  community.crypto.openssl_privatekey:
+    path: "{{ vault_dir.tls }}/vault.key"
+    size: 2048
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0600'
+
+- name: vault-tls | Create certificate signing request for vault
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ vault_dir.tls }}/vault.key"
+    common_name: "{{ vault_conf_cluster_name }}"
+    subject_alt_name:
+      - "DNS:{{ ansible_fqdn }}"
+      - "DNS:localhost"
+      - "IP:{{ ansible_default_ipv4.address }}"
+      - "IP:127.0.0.1"
+  register: vault_req
+
+- name: vault-tls | Generate an certificate signed with own CA certificate for vault
+  community.crypto.x509_certificate:
+    path: "{{ vault_dir.tls }}/vault.crt"
+    csr_content: "{{ vault_req.csr }}"
+    ownca_path: "{{ vault_dir.tls }}/ca.crt"
+    ownca_privatekey_path: "{{ vault_dir.tls }}/ca.key"
+    ownca_not_after: "+730d"
+    provider: ownca
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0644'
+
+- name: vault-tls | Create extra dir for kafka ca cert
+  ansible.builtin.file:
+    path: /usr/local/share/ca-certificates/VAULT
+    state: directory
+    mode: '0755'
+
+- name: vault-tls | Create link to kafka ca cert
+  ansible.builtin.file:
+    src: "{{ vault_dir.tls }}/ca.crt"
+    dest: "/usr/local/share/ca-certificates/VAULT/vault-ca.crt"
+    state: link
+
+- name: vault-tls | Update ca certificates
+  ansible.builtin.command: /usr/sbin/update-ca-certificates --fresh

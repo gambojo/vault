@@ -1,0 +1,18 @@
+---
+- name: vault-check | Check ensure vault init file
+  ansible.builtin.stat:
+    path: "{{ vault_dir.conf }}/init.file"
+  register: vault_init
+
+- name: vault-check | Set vault_installed variable
+  ansible.builtin.set_fact:
+    vault_installed: "{{ vault_init.stat.exists }}"
+
+- name: vault-check | Check ensure vault init file
+  ansible.builtin.stat:
+    path: "{{ vault_dir.tls }}/vault.crt"
+  register: vault_tls
+
+- name: vault-check | Set vault_installed variable
+  ansible.builtin.set_fact:
+    vault_tls_enabled: "{{ vault_tls.stat.exists }}"

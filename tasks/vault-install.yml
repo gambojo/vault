@@ -1,0 +1,59 @@
+---
+- name: vault-install | Install zip
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - zip
+      - unzip
+
+- name: vault-install | Create vault group
+  ansible.builtin.group:
+    name: "{{ vault_group }}"
+    system: true
+    gid: '{{ vault_gid }}'
+
+- name: vault-install | Create vault user
+  ansible.builtin.user:
+    name: "{{ vault_user }}"
+    uid: "{{ vault_uid }}"
+    shell: /bin/false
+    group: "{{ vault_group }}"
+    home: "{{ vault_home }}"
+    create_home: false
+
+- name: vault-install | Create vault conig dirs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0755'
+  loop: "{{ vault_dir.values() }}"
+
+- name: vault-install | Download vault archive
+  ansible.builtin.get_url:
+    url: "{{ vault_source_url }}"
+    dest: "/tmp/{{ vault_source_url | basename }}"
+    mode: '0664'
+
+- name: vault-install | Extract vault archive
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ vault_source_url | basename }}"
+    dest: "{{ vault_dir.bin }}/"
+    remote_src: true
+    include: "vault"
+    creates: "{{ vault_dir.bin }}/vault"
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0755'
+
+- name: vault-install | Remove extracted archive
+  ansible.builtin.file:
+    path: "/tmp/{{ vault_source_url | basename }}"
+    state: absent
+
+- name: vault-install | Create symlink to default bin path
+  ansible.builtin.file:
+    src: "{{ vault_dir.bin }}/vault"
+    dest: "/usr/local/bin/vault"
+    state: link

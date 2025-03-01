@@ -1,0 +1,31 @@
+disable_cache = {{ vault_conf_disable_cache | string | lower }}
+disable_mlock = {{ vault_conf_disable_mlock | string | lower }}
+ui = {{ vault_conf_ui | string | lower }}
+max_lease_ttl = "{{ vault_conf_max_lease_ttl }}"
+default_lease_ttl = "{{ vault_conf_default_lease_ttl }}"
+cluster_name = "{{ vault_conf_cluster_name }}"
+raw_storage_endpoint = {{ vault_conf_raw_storage_endpoint | string | lower }}
+disable_sealwrap = {{ vault_conf_disable_sealwrap | string | lower }}
+disable_printable_check = {{ vault_conf_disable_printable_check | string | lower }}
+log_level = "{{ vault_conf_log_level }}"
+log_file = "{{ vault_conf_log_file }}"
+log_rotate_duration = "{{ vault_conf_log_rotate_duration }}"
+log_rotate_bytes = {{ vault_conf_log_rotate_bytes }}
+log_rotate_max_files = {{ vault_conf_log_rotate_max_files }}
+api_addr = "{{ 'https' if vault_tls_enable else 'http' }}://{{ vault_address }}:{{ vault_port }}"
+cluster_addr = "{{ 'https' if vault_tls_enable else 'http' }}://{{ vault_cluster_address }}:{{ vault_cluster_port }}"
+listener "tcp" {
+    address = "0.0.0.0:{{ vault_port }}"
+{% if vault_tls_enable %}
+    tls_cert_file = "{{ vault_dir.tls }}/vault.crt"
+    tls_key_file = "{{ vault_dir.tls }}/vault.key"
+{% else %}
+    tls_disable = 1
+{% endif %}
+}
+storage "{{ vault_storage_mode }}" {
+    path  = "{{ vault_dir.data }}"
+{% if vault_storage_mode == "raft" %}
+    node_id = "raft_node_id"
+{% endif %}
+}

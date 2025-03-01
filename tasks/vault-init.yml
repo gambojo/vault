@@ -1,0 +1,65 @@
+---
+- name: vault-init | Init new vault server
+  ansible.builtin.command: "{{ vault_dir.bin }}/vault operator init"
+  register: vault_init
+  no_log: true
+
+- name: vault-init | Save initialization settings
+  ansible.builtin.copy:
+    content: |
+      {{ vault_init.stdout }}
+    dest: "{{ vault_dir.conf }}/init.file"
+    mode: '0600'
+  no_log: true
+
+- name: vault-init | Get auth tocken
+  ansible.builtin.set_fact:
+    vault_init_token: "{{ vault_init.stdout_lines |
+                            regex_search('Initial Root Token: [A-Za-z0-9]*.[A-Za-z0-9/=+-_]*') |
+                            regex_replace('^.*: (.*)', '\\1') }}"
+    vault_unseal_token1: "{{ vault_init.stdout_lines |
+                            regex_search('Unseal Key 1: [A-Za-z0-9/=+-_]*') |
+                            regex_replace('^.*: (.*)', '\\1') }}"
+    vault_unseal_token2: "{{ vault_init.stdout_lines |
+                            regex_search('Unseal Key 2: [A-Za-z0-9/=+-_]*') |
+                            regex_replace('^.*: (.*)', '\\1') }}"
+    vault_unseal_token3: "{{ vault_init.stdout_lines |
+                            regex_search('Unseal Key 3: [A-Za-z0-9/=+-_]*') |
+                            regex_replace('^.*: (.*)', '\\1') }}"
+  no_log: true
+
+- name: vault-init | Save initialization settings
+  ansible.builtin.blockinfile:
+    path: "/etc/environment"
+    block: |
+      export VAULT_ADDR={{ 'https' if vault_tls_enable else 'http' }}://{{ vault_address }}:{{ vault_port }}
+      export VAULT_TOKEN="{{- vault_init_token -}}"
+    mode: '0644'
+  no_log: true
+
+- name: vault-init | Set completion
+  ansible.builtin.lineinfile:
+    path: "/etc/bash.bashrc"
+    line: "complete -C {{ vault_dir.bin }}/vault vault"
+    insertafter: 'EOF'
+    mode: '0644'
+  no_log: true
+
+- name: vault-init | Unseal vault token 1
+  ansible.builtin.command: "{{ vault_dir.bin }}/vault operator unseal {{ vault_unseal_token1 }}"
+  no_log: true
+
+- name: vault-init | Unseal vault token 2
+  ansible.builtin.command: "{{ vault_dir.bin }}/vault operator unseal {{ vault_unseal_token2 }}"
+  no_log: true
+
+- name: vault-init | Unseal vault token 3
+  ansible.builtin.command: "{{ vault_dir.bin }}/vault operator unseal {{ vault_unseal_token3 }}"
+  no_log: true
+
+- name: vault-init | Enable audit
+  ansible.builtin.command: "{{ vault_dir.bin }}/vault audit enable file path={{ vault_dir.log }}/vault-audit.log"
+  environment:
+    VAULT_ADDR: "{{ 'https' if vault_tls_enable else 'http' }}://{{ vault_address }}:{{ vault_port }}"
+    VAULT_TOKEN: "{{- vault_init_token -}}"
+  no_log: true
