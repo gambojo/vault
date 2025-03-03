@@ -34,15 +34,7 @@
 - name: vault | Deploy consul
   ansible.builtin.include_role:
     name: consul
-  vars:
-    consul_version: 1.20.4
-    consul_source_url: "http://10.21.240.62/consul_{{ consul_version }}_linux_amd64.zip"
   when: groups.vault | length > 1
-
-- name: consul-configure | Start consul
-  ansible.builtin.service:
-    name: consul
-    state: started
 
 - name: vault | Configure vault
   ansible.builtin.include_tasks: vault-configure.yml

@@ -48,8 +48,8 @@ storage "consul" {
 {%   elif vault_consul_tls and not vault_consul_skip_verify %}
     scheme = "https"
     tls_ca_file = "{{ vault_consul_tls_ca_file }}"
-#    tls_cert_file = "/opt/consul/tls/consul/crt"
-#    tls_key_file  = "/opt/consul/tls/consul/crt"
+    tls_cert_file = "{{ vault_consul_tls_crt_file }}"
+    tls_key_file  = "{{ vault_consul_tls_key_file }}"
 {%   endif %}
 }
 {% else %}

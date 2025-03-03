@@ -33,9 +33,10 @@ vault_conf_log_rotate_bytes: 104857600
 vault_conf_log_rotate_max_files: 7
 
 vault_consul_address: "127.0.0.1"
-# vault_consul_address: "10.21.241.3"
 vault_consul_port: 8500
 vault_consul_path: "vault"
 vault_consul_tls: false
 vault_consul_skip_verify: true
-vault_consul_tls_ca_file: "/opt/consul/tls/ca/crt"
+vault_consul_tls_ca_file: "/opt/consul/tls/ca.crt"
+vault_consul_tls_crt_file: "/opt/consul/tls/consul.crt"
+vault_consul_tls_key_file: "/opt/consul/tls/consul.key"
