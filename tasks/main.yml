@@ -2,19 +2,50 @@
 - name: vault | Check
   ansible.builtin.include_tasks: vault-check.yml
 
+- name: vault | Resolve hosts
+  ansible.builtin.blockinfile:
+    block: |
+      {% if groups.vault | length > 1 %}
+      {%    for host in groups.vault %}
+      {{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ hostvars[host]['ansible_fqdn'] }} {{ hostvars[host]['ansible_hostname'] }}
+      {%    endfor %}
+      {% else %}
+      {{ ansible_default_ipv4 }} {{ ansible_fqdn }} {{ ansible_hostname }}
+      {% endif %}
+    path: /etc/hosts
+    marker: "# {mark} ANSIBLE MANAGED BLOCK VAULT"
+    mode: '0644'
+
 - name: vault | Install vault
   ansible.builtin.include_tasks: vault-install.yml
-  when: not vault_installed
 
 - name: vault | Generate certificates
   ansible.builtin.include_tasks: vault-tls.yml
-  when:
-    - vault_tls_enable
-    - not vault_tls_enabled
+  when: vault_port_https is defined
+
+- name: vault | Set consul group
+  ansible.builtin.add_host:
+    name: "{{ item }}"
+    groups: consul
+  changed_when: false
+  with_items: "{{ groups.vault }}"
+  when: groups.vault | length > 1
+
+- name: vault | Deploy consul
+  ansible.builtin.include_role:
+    name: consul
+  vars:
+    consul_version: 1.20.4
+    consul_source_url: "http://10.21.240.62/consul_{{ consul_version }}_linux_amd64.zip"
+  when: groups.vault | length > 1
+
+- name: consul-configure | Start consul
+  ansible.builtin.service:
+    name: consul
+    state: started
 
 - name: vault | Configure vault
   ansible.builtin.include_tasks: vault-configure.yml
 
-- name: vault | Init vault
+- name: vault | Configure vault
   ansible.builtin.include_tasks: vault-init.yml
-  when: not vault_installed

@@ -2,13 +2,11 @@
 vault_version: 1.18.5
 vault_source_url: "https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip"
 
-vault_home: "/opt/vault"
-vault_dir:
-  bin: "{{ vault_home }}/bin"
-  conf: "{{ vault_home }}/etc"
-  data: "{{ vault_home }}/data"
-  tls: "{{ vault_home }}/tls"
-  log: "{{ vault_home }}/log"
+vault_dir_bin: /opt/vault/bin
+vault_dir_conf: /opt/vault/etc
+vault_dir_data: /opt/vault/data
+vault_dir_tls: /opt/vault/tls
+vault_dir_log: /opt/vault/log
 
 vault_user: "vault"
 vault_group: "vault"
@@ -16,11 +14,8 @@ vault_uid: 911
 vault_gid: 911
 
 vault_address: "127.0.0.1"
-vault_port: 8200
-vault_cluster_address: "{{ vault_address }}"
-vault_cluster_port: 8201
-
-vault_tls_enable: true
+vault_port_http: 8200
+vault_port_https: 8202
 
 vault_conf_disable_cache: true
 vault_conf_disable_mlock: true
@@ -32,9 +27,15 @@ vault_conf_raw_storage_endpoint: true
 vault_conf_disable_sealwrap: true
 vault_conf_disable_printable_check: true
 vault_conf_log_level: "info"
-vault_conf_log_file: "{{ vault_dir.log }}/vault.log"
+vault_conf_log_file: "{{ vault_dir_log }}/vault.log"
 vault_conf_log_rotate_duration: "24h"
 vault_conf_log_rotate_bytes: 104857600
 vault_conf_log_rotate_max_files: 7
 
-vault_storage_mode: file
+vault_consul_address: "127.0.0.1"
+# vault_consul_address: "10.21.241.3"
+vault_consul_port: 8500
+vault_consul_path: "vault"
+vault_consul_tls: false
+vault_consul_skip_verify: true
+vault_consul_tls_ca_file: "/opt/consul/tls/ca/crt"

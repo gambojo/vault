@@ -16,36 +16,61 @@
   ansible.builtin.user:
     name: "{{ vault_user }}"
     uid: "{{ vault_uid }}"
-    shell: /bin/false
+    shell: /usr/sbin/nologin
     group: "{{ vault_group }}"
-    home: "{{ vault_home }}"
+    system: true
+    home: "{{ vault_dir_data }}"
     create_home: false
 
-- name: vault-install | Create vault conig dirs
+- name: vault-install | Create vault bin and log dirs
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    mode: '0755'
+  loop:
+    - "{{ vault_dir_bin }}"
+    - "{{ vault_dir_conf }}"
+    - "{{ vault_dir_tls }}"
+    - "{{ vault_dir_log }}"
+
+- name: vault-install | Create vault data dir
+  ansible.builtin.file:
+    path: "{{ vault_dir_data }}"
+    state: directory
     owner: "{{ vault_user }}"
     group: "{{ vault_group }}"
-    mode: '0755'
-  loop: "{{ vault_dir.values() }}"
+    mode: '0750'
+
+- name: vault-install | Create vault log files
+  ansible.builtin.file:
+    path: "{{ vault_dir_log }}/{{ item }}"
+    state: touch
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: '0664'
+  changed_when: false
+  loop:
+    - vault.log
+    - vault-audit.log
 
 - name: vault-install | Download vault archive
   ansible.builtin.get_url:
     url: "{{ vault_source_url }}"
     dest: "/tmp/{{ vault_source_url | basename }}"
     mode: '0664'
+  when: not vault_installed
 
 - name: vault-install | Extract vault archive
   ansible.builtin.unarchive:
     src: "/tmp/{{ vault_source_url | basename }}"
-    dest: "{{ vault_dir.bin }}/"
+    dest: "{{ vault_dir_bin }}/"
     remote_src: true
     include: "vault"
-    creates: "{{ vault_dir.bin }}/vault"
+    creates: "{{ vault_dir_bin }}/vault"
     owner: "{{ vault_user }}"
     group: "{{ vault_group }}"
     mode: '0755'
+  when: not vault_installed
 
 - name: vault-install | Remove extracted archive
   ansible.builtin.file:
@@ -54,6 +79,6 @@
 
 - name: vault-install | Create symlink to default bin path
   ansible.builtin.file:
-    src: "{{ vault_dir.bin }}/vault"
+    src: "{{ vault_dir_bin }}/vault"
     dest: "/usr/local/bin/vault"
     state: link

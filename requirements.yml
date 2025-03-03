@@ -1,0 +1,5 @@
+---
+- src: https://github.com/gambojo/consul.git
+  scm: git
+  version: main
+  name: consul

@@ -1,18 +1,28 @@
 ---
-- name: vault-check | Check ensure vault init file
+- name: vault-check | Check vault group
+  ansible.builtin.assert:
+    that: groups.vault is defined
+    msg: "Required group 'vault'"
+
+- name: vault-check | Check vault ports
+  ansible.builtin.assert:
+    that: vault_port_http is defined or
+          vault_port_https is defined
+
+- name: vault-check | Set vault_master variable
+  ansible.builtin.set_fact:
+    vault_master: >-
+      {%- if groups.vault | length > 1 -%}
+      {{- groups.vault[0] -}}
+      {%- else -%}
+      {{- groups.vault -}}
+      {%- endif -%}
+
+- name: vault-check | Check vault is installed
   ansible.builtin.stat:
-    path: "{{ vault_dir.conf }}/init.file"
-  register: vault_init
+    path: "{{ vault_dir_bin }}/vault"
+  register: vault_bin_check
 
 - name: vault-check | Set vault_installed variable
   ansible.builtin.set_fact:
-    vault_installed: "{{ vault_init.stat.exists }}"
-
-- name: vault-check | Check ensure vault init file
-  ansible.builtin.stat:
-    path: "{{ vault_dir.tls }}/vault.crt"
-  register: vault_tls
-
-- name: vault-check | Set vault_installed variable
-  ansible.builtin.set_fact:
-    vault_tls_enabled: "{{ vault_tls.stat.exists }}"
+    vault_installed: "{{ vault_bin_check.stat.exists }}"

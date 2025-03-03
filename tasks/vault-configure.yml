@@ -2,7 +2,7 @@
 - name: vault-configure | Create vault config
   ansible.builtin.template:
     src: "config.hcl.j2"
-    dest: "{{ vault_dir.conf }}/config.hcl"
+    dest: "{{ vault_dir_conf }}/config.hcl"
     owner: "{{ vault_user }}"
     group: "{{ vault_group }}"
     mode: '0644'
@@ -12,15 +12,14 @@
   ansible.builtin.template:
     src: "vault.service.j2"
     dest: "/etc/systemd/system/vault.service"
-    owner: "{{ vault_user }}"
-    group: "{{ vault_group }}"
     mode: '0644'
   register: vault_service
 
-- name: vault-configure | Retart vault
+- name: vault-configure | restart vault
   ansible.builtin.service:
     name: vault
     state: restarted
     enabled: true
+  register: vault_restart
   when: vault_config is changed or
         vault_service is changed

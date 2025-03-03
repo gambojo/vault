@@ -1,31 +1,60 @@
-disable_cache = {{ vault_conf_disable_cache | string | lower }}
-disable_mlock = {{ vault_conf_disable_mlock | string | lower }}
-ui = {{ vault_conf_ui | string | lower }}
-max_lease_ttl = "{{ vault_conf_max_lease_ttl }}"
-default_lease_ttl = "{{ vault_conf_default_lease_ttl }}"
+# Main settings
 cluster_name = "{{ vault_conf_cluster_name }}"
-raw_storage_endpoint = {{ vault_conf_raw_storage_endpoint | string | lower }}
-disable_sealwrap = {{ vault_conf_disable_sealwrap | string | lower }}
-disable_printable_check = {{ vault_conf_disable_printable_check | string | lower }}
+
+# Enable web-interface
+ui = {{ vault_conf_ui | string | lower }}
+
+# Log settings
 log_level = "{{ vault_conf_log_level }}"
 log_file = "{{ vault_conf_log_file }}"
 log_rotate_duration = "{{ vault_conf_log_rotate_duration }}"
 log_rotate_bytes = {{ vault_conf_log_rotate_bytes }}
 log_rotate_max_files = {{ vault_conf_log_rotate_max_files }}
-api_addr = "{{ 'https' if vault_tls_enable else 'http' }}://{{ vault_address }}:{{ vault_port }}"
-cluster_addr = "{{ 'https' if vault_tls_enable else 'http' }}://{{ vault_cluster_address }}:{{ vault_cluster_port }}"
-listener "tcp" {
-    address = "0.0.0.0:{{ vault_port }}"
-{% if vault_tls_enable %}
-    tls_cert_file = "{{ vault_dir.tls }}/vault.crt"
-    tls_key_file = "{{ vault_dir.tls }}/vault.key"
+
+# Network settings
+{% if vault_port_https is defined %}
+api_addr = "https://{{ vault_address }}:{{ vault_port_https }}"
+cluster_addr = "https://{{ vault_address }}:{{ vault_port_https | int + 1 }}"
 {% else %}
+api_addr = "http://{{ vault_address }}:{{ vault_port_http }}"
+cluster_addr = "http://{{ vault_address }}:{{ vault_port_http | int + 1 }}"
+{% endif %}
+
+{% if vault_port_http is defined %}
+listener "tcp" {
+    address = "0.0.0.0:{{ vault_port_http }}"
     tls_disable = 1
-{% endif %}
 }
-storage "{{ vault_storage_mode }}" {
-    path  = "{{ vault_dir.data }}"
-{% if vault_storage_mode == "raft" %}
-    node_id = "raft_node_id"
 {% endif %}
+
+{% if vault_port_https is defined %}
+listener "tcp" {
+    address = "0.0.0.0:{{ vault_port_https }}"
+    tls_cert_file = "{{ vault_dir_tls }}/vault.crt"
+    tls_key_file = "{{ vault_dir_tls }}/vault.key"
 }
+{% endif %}
+
+{% if groups.vault | length > 1 %}
+# Consul storage settings
+storage "consul" {
+    address = "{{ vault_consul_address }}:{{ vault_consul_port }}"
+    path = "{{ vault_consul_path }}"
+    service_address = "{{ ansible_default_ipv4.address }}"
+    service = "{{ ansible_hostname }}"
+{%   if vault_consul_tls and vault_consul_skip_verify %}
+    scheme = "https"
+    tls_skip_verify = {{ vault_consul_skip_verify | string | lower }}
+{%   elif vault_consul_tls and not vault_consul_skip_verify %}
+    scheme = "https"
+    tls_ca_file = "{{ vault_consul_tls_ca_file }}"
+#    tls_cert_file = "/opt/consul/tls/consul/crt"
+#    tls_key_file  = "/opt/consul/tls/consul/crt"
+{%   endif %}
+}
+{% else %}
+# Storage settings
+storage "file" {
+    path = "{{ vault_dir_data }}"
+}
+{% endif %}
