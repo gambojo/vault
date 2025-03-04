@@ -77,4 +77,4 @@
     src: "{{ vault_dir_bin }}/vault"
     dest: "/usr/local/bin/vault"
     state: link
-  when: '"{{ vault_dir_bin }}/vault" != "/usr/local/bin/vault"'
+  failed_when: false

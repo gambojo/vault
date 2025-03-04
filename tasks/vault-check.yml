@@ -13,7 +13,7 @@
   ansible.builtin.set_fact:
     vault_master: "{%-
       if groups.vault | length > 1 -%}{{- groups.vault[0] -}}{%-
-      else -%}{{- inventory_hostname -}}{%- endif
+      else -%}{{- groups.vault -}}{%- endif
       -%}"
 
 - name: vault-check | Check vault is installed

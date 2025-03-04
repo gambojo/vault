@@ -37,6 +37,7 @@ vault_consul_port: 8501
 vault_consul_path: "vault"
 vault_consul_tls: true
 vault_consul_skip_verify: false
-vault_consul_tls_ca_file: "/opt/consul/tls/ca.crt"
-vault_consul_tls_crt_file: "/opt/consul/tls/consul.crt"
-vault_consul_tls_key_file: "/opt/consul/tls/consul.key"
+vault_consul_tls_ca_file: "{{ consul_dir_tls }}/ca.crt"
+vault_consul_tls_crt_file: "{{ consul_dir_tls }}/consul.crt"
+vault_consul_tls_key_file: "{{ consul_dir_tls }}/consul.key"
+vault_consul_token: 45f41c77-4e2d-5883-4a22-237ab514b607

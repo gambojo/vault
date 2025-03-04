@@ -47,6 +47,7 @@ storage "consul" {
     tls_skip_verify = {{ vault_consul_skip_verify | string | lower }}
 {%   elif vault_consul_tls and not vault_consul_skip_verify %}
     scheme = "https"
+    token: "{{ vault_consul_token }}"
     tls_ca_file = "{{ vault_consul_tls_ca_file }}"
     tls_cert_file = "{{ vault_consul_tls_crt_file }}"
     tls_key_file  = "{{ vault_consul_tls_key_file }}"
