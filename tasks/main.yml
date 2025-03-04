@@ -1,5 +1,5 @@
 ---
-- name: vault | Check
+- name: vault | Checking
   ansible.builtin.include_tasks: vault-check.yml
 
 - name: vault | Resolve hosts
@@ -32,12 +32,12 @@
   when: groups.vault | length > 1
 
 - name: vault | Deploy consul
-  ansible.builtin.include_role:
+  ansible.builtin.import_role:
     name: consul
   when: groups.vault | length > 1
 
 - name: vault | Configure vault
   ansible.builtin.include_tasks: vault-configure.yml
 
-- name: vault | Configure vault
+- name: vault | Init vault
   ansible.builtin.include_tasks: vault-init.yml

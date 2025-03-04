@@ -15,7 +15,7 @@
     mode: '0644'
   register: vault_service
 
-- name: vault-configure | restart vault
+- name: vault-configure | Restart vault
   ansible.builtin.service:
     name: vault
     state: restarted

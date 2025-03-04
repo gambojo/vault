@@ -2,9 +2,7 @@
 - name: vault-install | Install zip
   ansible.builtin.apt:
     update_cache: true
-    name:
-      - zip
-      - unzip
+    name: [zip, unzip]
 
 - name: vault-install | Create vault group
   ansible.builtin.group:
@@ -22,7 +20,7 @@
     home: "{{ vault_dir_data }}"
     create_home: false
 
-- name: vault-install | Create vault bin and log dirs
+- name: vault-install | Create vault conf dirs
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -41,17 +39,14 @@
     group: "{{ vault_group }}"
     mode: '0750'
 
-- name: vault-install | Create vault log files
+- name: vault-install | Create vault log file
   ansible.builtin.file:
-    path: "{{ vault_dir_log }}/{{ item }}"
+    path: "{{ vault_dir_log }}/vault.log"
     state: touch
     owner: "{{ vault_user }}"
     group: "{{ vault_group }}"
     mode: '0664'
   changed_when: false
-  loop:
-    - vault.log
-    - vault-audit.log
 
 - name: vault-install | Download vault archive
   ansible.builtin.get_url:
@@ -82,3 +77,4 @@
     src: "{{ vault_dir_bin }}/vault"
     dest: "/usr/local/bin/vault"
     state: link
+  when: '"{{ vault_dir_bin }}/vault" != "/usr/local/bin/vault"'

@@ -1,5 +1,5 @@
 ---
-- name: vault-init | Vault init
+- name: vault-init | Init vault server
   ansible.builtin.command: vault operator init -format=json
   args:
     creates: "{{ vault_dir_conf }}/init.file"
@@ -10,27 +10,27 @@
   when: inventory_hostname == vault_master
   no_log: true
 
-- name: vault-init | Reset init
+- name: vault-init | Save init content to var
   ansible.builtin.set_fact:
     vault_init_content: "{{ hostvars[vault_master]['vault_init']['stdout'] }}"
   when: hostvars[vault_master]['vault_init']['changed']
   no_log: true
 
-- name: vault-init | Slurp init
+- name: vault-init | Slurp init content
   ansible.builtin.slurp:
     path: "{{ vault_dir_conf }}/init.file"
   register: vault_init_file_content
   when:
     - not hostvars[vault_master]['vault_init']['changed']
 
-- name: vault-init | Reset init
+- name: vault-init | Save init content to var
   ansible.builtin.set_fact:
     vault_init_content: "{{ vault_init_file_content.content | b64decode }}"
   when:
     - not hostvars[vault_master]['vault_init']['changed']
   no_log: true
 
-- name: vault-init | Vault init save
+- name: vault-init | Save init content to file
   ansible.builtin.copy:
     content: "{{ vault_init_content }}"
     dest: "{{ vault_dir_conf }}/init.file"
