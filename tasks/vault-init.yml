@@ -51,3 +51,49 @@
   when: hostvars[vault_master]['vault_init']['changed'] or
         vault_restart is changed
   no_log: true
+
+- name: vault-init | Vault enable userpass
+  ansible.builtin.command: vault auth enable userpass
+  changed_when: false
+  failed_when: false
+  environment:
+    VAULT_ADDR: "{% if vault_port_https is defined %}https://{{ vault_address }}:{{ vault_port_https }}{%
+                else %}http://{{ vault_address }}:{{ vault_port_http }}{% endif %}"
+    VAULT_TOKEN: "{{- vault_init_content.root_token -}}"
+
+- name: vault-init | Vault upload admins policy
+  ansible.builtin.copy:
+    content: |
+      path "auth/*" {
+          capabilities = ["create", "read", "update", "delete", "list"]
+      }
+
+      path "sys/*" {
+          capabilities = ["create", "read", "update", "delete", "list"]
+      }
+
+      path "identity/*" {
+          capabilities = ["create", "read", "update", "delete", "list"]
+      }
+
+      path "cubbyhole/*" {
+          capabilities = ["create", "read", "update", "delete", "list"]
+      }
+    dest: "{{ vault_dir_conf }}/admin-policy.hcl"
+    mode: '0644'
+
+- name: vault-init | Vault add user
+  ansible.builtin.command: vault policy write admin {{ vault_dir_conf }}/admin-policy.hcl
+  changed_when: false
+  environment:
+    VAULT_ADDR: "{% if vault_port_https is defined %}https://{{ vault_address }}:{{ vault_port_https }}{%
+                else %}http://{{ vault_address }}:{{ vault_port_http }}{% endif %}"
+    VAULT_TOKEN: "{{- vault_init_content.root_token -}}"
+
+- name: vault-init | Vault add user
+  ansible.builtin.command: vault write auth/userpass/users/{{ vault_ui_user }} password={{ vault_ui_password }} policies=admin
+  changed_when: false
+  environment:
+    VAULT_ADDR: "{% if vault_port_https is defined %}https://{{ vault_address }}:{{ vault_port_https }}{%
+                else %}http://{{ vault_address }}:{{ vault_port_http }}{% endif %}"
+    VAULT_TOKEN: "{{- vault_init_content.root_token -}}"

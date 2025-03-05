@@ -1,12 +1,13 @@
 ---
-consul_version: 1.20.4
-consul_source_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
+# consul_version: 1.20.4
+# consul_source_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
 consul_conf_tls_verify_incoming: true
 consul_port_https: "{{ vault_consul_port }}"
 consul_conf_ui_config: true
 consul_dir_tls: /opt/consul/tls
 consul_acl_enable: true
 consul_for_vault: true
+consul_vault_group: "{{ vault_group }}"
 
 consul_policy:
   - name: "{{ vault_consul_path }}"

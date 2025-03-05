@@ -8,6 +8,8 @@ vault_dir_data: /opt/vault/data
 vault_dir_tls: /opt/vault/tls
 vault_dir_log: /opt/vault/log
 
+vault_ui_user: "admin"
+vault_ui_password: "admin"
 vault_user: "vault"
 vault_group: "vault"
 vault_uid: 911
